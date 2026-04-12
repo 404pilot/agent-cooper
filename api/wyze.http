@@ -1,0 +1,89 @@
+### ==========================================================
+### Wyze API Reference
+### ==========================================================
+### Prerequisites:
+###   1. Run: ./api/gen-env.sh secrets/secrets.yaml .env
+###   2. Run requests top-to-bottom (login first, others use token)
+### ==========================================================
+
+### Variables
+@authHost = https://auth-prod.api.wyze.com
+@apiHost = https://api.wyzecam.com
+@email = {{$dotenv WYZE_EMAIL}}
+@passwordMd5 = {{$dotenv WYZE_PASSWORD_MD5}}
+@keyId = {{$dotenv WYZE_KEY_ID}}
+@apiKey = {{$dotenv WYZE_API_KEY}}
+
+### ----- Authentication -----
+
+### Login — get access_token and refresh_token
+### Docs: https://support.wyze.com/hc/en-us/articles/16129834216731
+### Rate limited — do NOT call repeatedly, use refresh endpoint instead
+# @name login
+POST {{authHost}}/api/user/login
+Content-Type: application/json
+keyid: {{keyId}}
+apikey: {{apiKey}}
+
+{
+  "email": "{{email}}",
+  "password": "{{passwordMd5}}"
+}
+
+###
+@accessToken = {{login.response.body.access_token}}
+@refreshToken = {{login.response.body.refresh_token}}
+
+### Refresh access token — use this instead of re-logging in
+### Access token valid: 2 days | Refresh token valid: 30 days
+# @name refresh
+POST {{apiHost}}/app/user/refresh_token
+Content-Type: application/json
+
+{
+  "app_ver": "wyze_developer_api",
+  "app_version": "wyze_developer_api",
+  "phone_id": "wyze_developer_api",
+  "refresh_token": "{{refreshToken}}",
+  "sc": "wyze_developer_api",
+  "sv": "wyze_developer_api",
+  "ts": {{$timestamp}}000
+}
+
+### ----- Devices -----
+
+### List all devices
+# @name devices
+POST {{apiHost}}/app/v2/home_page/get_object_list
+Content-Type: application/json
+
+{
+  "access_token": "{{accessToken}}",
+  "phone_id": "wyze_developer_api",
+  "app_ver": "wyze_developer_api",
+  "app_version": "wyze_developer_api",
+  "sc": "wyze_developer_api",
+  "sv": "wyze_developer_api",
+  "ts": {{$timestamp}}000
+}
+
+### Get device property list
+### Use to read device-specific properties (e.g., garage door state)
+### Key properties for Garage Door Controller (HL_CGDC):
+###   P1301 — open_close_state: 0=closed, 1=open
+###   P1056 — accessory_state: 0=closed (app), 1=open, 2=closed (automation)
+# @name properties
+POST {{apiHost}}/app/v2/device/get_property_list
+Content-Type: application/json
+
+{
+  "access_token": "{{accessToken}}",
+  "phone_id": "wyze_developer_api",
+  "app_ver": "wyze_developer_api",
+  "app_version": "wyze_developer_api",
+  "sc": "wyze_developer_api",
+  "sv": "wyze_developer_api",
+  "ts": {{$timestamp}}000,
+  "device_mac": "{{$dotenv GARAGE_CAM_MAC}}",
+  "device_model": "{{$dotenv GARAGE_CAM_MODEL}}"
+}

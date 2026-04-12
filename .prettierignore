@@ -1,0 +1,5 @@
+dist/
+node_modules/
+.deploy/
+secrets/secrets.yaml
+package-lock.json

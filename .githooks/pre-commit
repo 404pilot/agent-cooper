@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook: scan staged files for secrets using gitleaks.
+#
+set -euo pipefail
+
+if ! command -v gitleaks &> /dev/null; then
+  echo "ERROR: gitleaks is not installed. Run: brew install gitleaks"
+  exit 1
+fi
+
+echo "Scanning for secrets..."
+gitleaks protect --staged --no-banner

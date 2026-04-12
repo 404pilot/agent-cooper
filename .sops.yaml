@@ -1,0 +1,3 @@
+creation_rules:
+  - path_regex: secrets/.*\.yaml$
+    azure_keyvault: https://kv-agent-cooper.vault.azure.net/keys/sops-key/e8d83428b3b74315a8de1d28c4fb2c00
