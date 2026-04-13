@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { WyzeService } from '../../src/wyze/service';
-import { GarageDoorStatus } from '../../src/wyze/types';
+import { DeviceStatus } from '../../src/wyze/types';
 
 const dummyCredentials = {
   email: 'test@test.com',
@@ -18,7 +18,7 @@ describe('WyzeService.isOpenTooLong', () => {
   const service = new WyzeService(dummyCredentials);
 
   it('should ignore closed doors regardless of how long ago they were closed', () => {
-    const status: GarageDoorStatus = {
+    const status: DeviceStatus = {
       isOpen: false,
       lastUpdatedAt: new Date(Date.now() - 60 * 60 * 1000),
     };
@@ -26,7 +26,7 @@ describe('WyzeService.isOpenTooLong', () => {
   });
 
   it('should not alert when door just opened (10 min < 20 min threshold)', () => {
-    const status: GarageDoorStatus = {
+    const status: DeviceStatus = {
       isOpen: true,
       lastUpdatedAt: new Date(Date.now() - 10 * 60 * 1000),
     };
@@ -34,7 +34,7 @@ describe('WyzeService.isOpenTooLong', () => {
   });
 
   it('should alert when door has been open past threshold (25 min > 20 min)', () => {
-    const status: GarageDoorStatus = {
+    const status: DeviceStatus = {
       isOpen: true,
       lastUpdatedAt: new Date(Date.now() - 25 * 60 * 1000),
     };
@@ -42,7 +42,7 @@ describe('WyzeService.isOpenTooLong', () => {
   });
 
   it('should alert at exactly the threshold boundary (20 min = 20 min)', () => {
-    const status: GarageDoorStatus = {
+    const status: DeviceStatus = {
       isOpen: true,
       lastUpdatedAt: new Date(Date.now() - 20 * 60 * 1000),
     };

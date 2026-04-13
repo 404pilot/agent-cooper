@@ -88,6 +88,8 @@ resource "azurerm_function_app_flex_consumption" "main" {
     "WYZE_API_KEY"                           = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/wyze-api-key)"
     "GARAGE_CAM_MAC"                         = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/garage-cam-mac)"
     "GARAGE_CAM_MODEL"                       = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/garage-cam-model)"
+    "FRONT_DOOR_LOCK_MAC"                    = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/front-door-lock-mac)"
+    "FRONT_DOOR_LOCK_MODEL"                  = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/front-door-lock-model)"
     "GMAIL_USER"                             = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/gmail-user)"
     "GMAIL_APP_PASSWORD"                     = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/gmail-app-password)"
     "GMAIL_TO_PRIMARY"                       = "@Microsoft.KeyVault(SecretUri=https://${var.key_vault_name}.vault.azure.net/secrets/gmail-to-primary)"

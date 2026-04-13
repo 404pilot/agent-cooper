@@ -10,6 +10,8 @@
 - deploy.sh is the single entry point for all deployments.
 - Terraform runs first (infra), then az CLI deploys code separately.
 - This decoupling is intentional — infrastructure and code have different lifecycles.
+- Treat this repo as production. No ad-hoc fixes via portal or az CLI. Every change goes through code → tests → deploy.sh.
+- When renaming/removing a function, taint the Function App (`terraform taint azurerm_function_app_flex_consumption.main`) and redeploy to get a clean state. Zip deploy is additive and doesn't remove old function entries.
 
 # Code Style
 

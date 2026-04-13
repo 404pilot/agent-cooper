@@ -27,6 +27,8 @@ decrypt_secrets() {
   WYZE_API_KEY=$(sops -d --extract '["wyze"]["api_key"]' "$SECRETS_FILE")
   GARAGE_CAM_MAC=$(sops -d --extract '["wyze"]["devices"]["garage_cam"]["mac"]' "$SECRETS_FILE")
   GARAGE_CAM_MODEL=$(sops -d --extract '["wyze"]["devices"]["garage_cam"]["model"]' "$SECRETS_FILE")
+  FRONT_DOOR_LOCK_MAC=$(sops -d --extract '["wyze"]["devices"]["front_door_lock"]["mac"]' "$SECRETS_FILE")
+  FRONT_DOOR_LOCK_MODEL=$(sops -d --extract '["wyze"]["devices"]["front_door_lock"]["model"]' "$SECRETS_FILE")
   GMAIL_USER=$(sops -d --extract '["mail"]["service"]["gmail"]["user"]' "$SECRETS_FILE")
   GMAIL_APP_PASSWORD=$(sops -d --extract '["mail"]["service"]["gmail"]["app_password"]' "$SECRETS_FILE")
   GMAIL_TO_PRIMARY=$(sops -d --extract '["mail"]["to"]["primary"]' "$SECRETS_FILE")
@@ -40,7 +42,9 @@ upload_secrets() {
   az keyvault secret set --vault-name "$VAULT_NAME" --name "wyze-key-id"        --value "$WYZE_KEY_ID"        --output none
   az keyvault secret set --vault-name "$VAULT_NAME" --name "wyze-api-key"       --value "$WYZE_API_KEY"       --output none
   az keyvault secret set --vault-name "$VAULT_NAME" --name "garage-cam-mac"     --value "$GARAGE_CAM_MAC"     --output none
-  az keyvault secret set --vault-name "$VAULT_NAME" --name "garage-cam-model"   --value "$GARAGE_CAM_MODEL"   --output none
+  az keyvault secret set --vault-name "$VAULT_NAME" --name "garage-cam-model"       --value "$GARAGE_CAM_MODEL"       --output none
+  az keyvault secret set --vault-name "$VAULT_NAME" --name "front-door-lock-mac"   --value "$FRONT_DOOR_LOCK_MAC"   --output none
+  az keyvault secret set --vault-name "$VAULT_NAME" --name "front-door-lock-model" --value "$FRONT_DOOR_LOCK_MODEL" --output none
   az keyvault secret set --vault-name "$VAULT_NAME" --name "gmail-user"         --value "$GMAIL_USER"         --output none
   az keyvault secret set --vault-name "$VAULT_NAME" --name "gmail-app-password" --value "$GMAIL_APP_PASSWORD" --output none
   az keyvault secret set --vault-name "$VAULT_NAME" --name "gmail-to-primary"   --value "$GMAIL_TO_PRIMARY"   --output none

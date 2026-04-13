@@ -33,6 +33,7 @@ build() {
   npm ci
 
   log "Compiling TypeScript..."
+  npm run clean
   npm run build
 }
 

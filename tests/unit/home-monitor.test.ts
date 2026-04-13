@@ -2,10 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { InvocationContext } from '@azure/functions';
 
 /**
- * Tests for the garage monitor orchestration flow.
+ * Tests for the home monitor orchestration flow.
  * Verifies the function correctly handles:
- * - Normal operation (door closed, no alert)
- * - Door open too long (sends alert)
+ * - Normal operation (all devices closed, no alert)
+ * - Device open too long (sends alert)
  * - Wyze API failure (sends error alert)
  */
 
@@ -18,7 +18,11 @@ vi.mock('../../src/email/service', () => ({
 }));
 vi.mock('../../src/config', () => ({
   getWyzeCredentials: () => ({ email: 'a', password: 'b', keyId: 'c', apiKey: 'd' }),
-  getGarageCamDevice: () => ({ mac: 'MAC', model: 'MODEL' }),
+  getMonitoredDevices: () => [
+    { label: 'Garage door', mac: 'MAC1', model: 'MODEL1', openPid: 'P1301', activeState: 'open', inactiveState: 'closed' },
+    { label: 'Front door', mac: 'MAC2', model: 'MODEL2', openPid: 'P2001', activeState: 'open', inactiveState: 'closed' },
+    { label: 'Front door lock', mac: 'MAC2', model: 'MODEL2', openPid: 'P3', activeState: 'unlocked', inactiveState: 'locked' },
+  ],
   OPEN_THRESHOLD_MINUTES: 20,
   getEmailConfig: () => ({ gmailUser: 'a@b.com', gmailAppPassword: 'x', to: ['a@b.com'] }),
 }));
@@ -26,20 +30,21 @@ vi.mock('../../src/retry', () => ({
   withRetry: vi.fn((fn: () => Promise<unknown>) => fn()),
 }));
 
-import { garageMonitor } from '../../src/functions/garage-monitor';
+import { homeMonitor } from '../../src/functions/home-monitor';
 import { WyzeService } from '../../src/wyze/service';
 import { EmailService } from '../../src/email/service';
 
 const mockAuthenticate = vi.fn();
-const mockGetGarageDoorStatus = vi.fn();
+const mockGetDeviceStatus = vi.fn();
 const mockIsOpenTooLong = vi.fn();
 const mockSend = vi.fn();
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockAuthenticate.mockResolvedValue(undefined);
   (WyzeService as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
     authenticate: mockAuthenticate,
-    getGarageDoorStatus: mockGetGarageDoorStatus,
+    getDeviceStatus: mockGetDeviceStatus,
     isOpenTooLong: mockIsOpenTooLong,
   }));
   (EmailService as unknown as ReturnType<typeof vi.fn>).mockImplementation(() => ({
@@ -52,55 +57,56 @@ const fakeTimer = {
   schedule: { adjustForDST: false },
   scheduleStatus: undefined,
 };
-const fakeContext = { log: vi.fn(), warn: vi.fn() } as unknown as InvocationContext;
+const fakeContext = {
+  invocationId: 'test-id',
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+} as unknown as InvocationContext;
 
-describe('garageMonitor', () => {
-  it('should not send email when garage door is closed', async () => {
-    mockGetGarageDoorStatus.mockResolvedValue({ isOpen: false, lastUpdatedAt: new Date() });
+describe('homeMonitor', () => {
+  it('should not send email when all devices are closed', async () => {
+    mockGetDeviceStatus.mockResolvedValue({ isOpen: false, lastUpdatedAt: new Date() });
     mockIsOpenTooLong.mockReturnValue(false);
 
-    await garageMonitor(fakeTimer, fakeContext);
+    await homeMonitor(fakeTimer, fakeContext);
 
     expect(mockSend).not.toHaveBeenCalled();
+    expect(mockGetDeviceStatus).toHaveBeenCalledTimes(3);
   });
 
-  it('should send alert when garage door is open too long', async () => {
-    mockGetGarageDoorStatus.mockResolvedValue({
+  it('should send alert when a device is open too long', async () => {
+    mockGetDeviceStatus.mockResolvedValue({
       isOpen: true,
       lastUpdatedAt: new Date(Date.now() - 25 * 60 * 1000),
     });
     mockIsOpenTooLong.mockReturnValue(true);
 
-    await garageMonitor(fakeTimer, fakeContext);
+    await homeMonitor(fakeTimer, fakeContext);
 
-    expect(mockSend).toHaveBeenCalledTimes(1);
-    expect(mockSend).toHaveBeenCalledWith(
-      'Garage door is OPEN',
-      expect.stringContaining('over 20 minutes'),
-    );
+    expect(mockSend).toHaveBeenCalledTimes(3);
   });
 
-  it('should send error alert when Wyze API is unreachable', async () => {
-    mockAuthenticate.mockRejectedValue(new Error('Connection refused'));
+  it('should send error alerts when device check fails', async () => {
+    mockGetDeviceStatus.mockRejectedValue(new Error('Connection refused'));
 
-    await garageMonitor(fakeTimer, fakeContext);
+    await homeMonitor(fakeTimer, fakeContext);
 
-    expect(mockSend).toHaveBeenCalledTimes(1);
+    expect(mockSend).toHaveBeenCalledTimes(3);
     expect(mockSend).toHaveBeenCalledWith(
-      'Garage monitor ERROR — Wyze API unreachable',
+      expect.stringContaining('ERROR'),
       expect.stringContaining('Connection refused'),
     );
   });
 
-  it('should not send alert when door is open but under threshold', async () => {
-    mockAuthenticate.mockResolvedValue(undefined);
-    mockGetGarageDoorStatus.mockResolvedValue({
+  it('should not send alert when devices are open but under threshold', async () => {
+    mockGetDeviceStatus.mockResolvedValue({
       isOpen: true,
       lastUpdatedAt: new Date(Date.now() - 5 * 60 * 1000),
     });
     mockIsOpenTooLong.mockReturnValue(false);
 
-    await garageMonitor(fakeTimer, fakeContext);
+    await homeMonitor(fakeTimer, fakeContext);
 
     expect(mockSend).not.toHaveBeenCalled();
   });

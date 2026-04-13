@@ -1,13 +1,15 @@
 import { logger } from '../logger';
 import { WyzeClient } from './client';
-import { WyzeCredentials, GarageDoorStatus } from './types';
-
-// Wyze property IDs for garage door controller (HL_CGDC)
-const PID_OPEN_CLOSE_STATE = 'P1301';
+import { WyzeCredentials, DeviceStatus } from './types';
 
 export interface DeviceInfo {
+  label: string;
   mac: string;
   model: string;
+  openPid: string;
+  /** e.g. "open"/"closed" for doors, "unlocked"/"locked" for locks */
+  activeState: string;
+  inactiveState: string;
 }
 
 export class WyzeService {
@@ -21,26 +23,28 @@ export class WyzeService {
     await this.client.login();
   }
 
-  async getGarageDoorStatus(device: DeviceInfo): Promise<GarageDoorStatus> {
+  async getDeviceStatus(device: DeviceInfo): Promise<DeviceStatus> {
     const properties = await this.client.getPropertyList(device.mac, device.model);
 
-    const doorProp = properties.find((p) => p.pid === PID_OPEN_CLOSE_STATE);
-    if (!doorProp) {
-      throw new Error(`Property ${PID_OPEN_CLOSE_STATE} not found for device ${device.mac}`);
+    const prop = properties.find((p) => p.pid === device.openPid);
+    if (!prop) {
+      throw new Error(`Property ${device.openPid} not found for device ${device.mac}`);
     }
 
     const status = {
-      isOpen: doorProp.value === '1',
-      lastUpdatedAt: new Date(doorProp.ts),
+      isOpen: prop.value === '1',
+      lastUpdatedAt: new Date(prop.ts),
     };
-    logger.info('Garage door status', {
-      isOpen: status.isOpen,
+    logger.info('Device status', {
+      label: device.label,
+      state: status.isOpen ? device.activeState : device.inactiveState,
       since: status.lastUpdatedAt.toISOString(),
+      sinceLocal: status.lastUpdatedAt.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
     });
     return status;
   }
 
-  isOpenTooLong(status: GarageDoorStatus, thresholdMinutes: number): boolean {
+  isOpenTooLong(status: DeviceStatus, thresholdMinutes: number): boolean {
     if (!status.isOpen) return false;
 
     const openDurationMs = Date.now() - status.lastUpdatedAt.getTime();

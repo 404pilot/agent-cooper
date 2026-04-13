@@ -19,11 +19,37 @@ export function getWyzeCredentials(): WyzeCredentials {
   };
 }
 
-export function getGarageCamDevice(): DeviceInfo {
-  return {
-    mac: requireEnv('GARAGE_CAM_MAC'),
-    model: requireEnv('GARAGE_CAM_MODEL'),
-  };
+// Wyze property IDs:
+// P1301 — garage door controller (HL_CGDC) open/close state
+// P2001 — lock door sensor open/close state
+// P3    — lock locked/unlocked state (0=locked, 1=unlocked)
+export function getMonitoredDevices(): DeviceInfo[] {
+  return [
+    {
+      label: 'Garage door',
+      mac: requireEnv('GARAGE_CAM_MAC'),
+      model: requireEnv('GARAGE_CAM_MODEL'),
+      openPid: 'P1301',
+      activeState: 'open',
+      inactiveState: 'closed',
+    },
+    {
+      label: 'Front door',
+      mac: requireEnv('FRONT_DOOR_LOCK_MAC'),
+      model: requireEnv('FRONT_DOOR_LOCK_MODEL'),
+      openPid: 'P2001',
+      activeState: 'open',
+      inactiveState: 'closed',
+    },
+    {
+      label: 'Front door lock',
+      mac: requireEnv('FRONT_DOOR_LOCK_MAC'),
+      model: requireEnv('FRONT_DOOR_LOCK_MODEL'),
+      openPid: 'P3',
+      activeState: 'unlocked',
+      inactiveState: 'locked',
+    },
+  ];
 }
 
 export function getEmailConfig(): EmailConfig {
@@ -36,4 +62,4 @@ export function getEmailConfig(): EmailConfig {
   };
 }
 
-export const OPEN_THRESHOLD_MINUTES = 20;
+export const OPEN_THRESHOLD_MINUTES = 10;

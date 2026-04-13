@@ -25,7 +25,7 @@ export interface WyzeProperty {
   ts: number;
 }
 
-export interface GarageDoorStatus {
+export interface DeviceStatus {
   isOpen: boolean;
   lastUpdatedAt: Date;
 }

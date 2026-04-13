@@ -14,7 +14,7 @@
     "start": "func start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:integration": "vitest run tests/integration --ignore=tests/integration/pre-deploy",
+    "test:integration": "vitest run tests/integration",
     "test:pre-deploy": "vitest run tests/integration/pre-deploy",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
