@@ -15,7 +15,7 @@ const API_HOST = 'https://api.wyzecam.com';
 function tripleMd5(password: string): string {
   let hash = password;
   for (let i = 0; i < 3; i++) {
-    hash = crypto.createHash('md5').update(hash).digest('hex');
+    hash = crypto.hash('md5', hash, 'hex');
   }
   return hash;
 }

@@ -77,7 +77,7 @@ resource "azurerm_function_app_flex_consumption" "main" {
   }
 
   runtime_name    = "node"
-  runtime_version = "20"
+  runtime_version = "22"
 
   site_config {}
 
